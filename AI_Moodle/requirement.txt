@@ -1,0 +1,4 @@
+# pip install chromadb ollama pymupdf deepeval fastapi uvicorn
+# ollama pull qwen2.5:7b         
+# ollama pull deepseek-coder-v2    
+# ollama pull llama3.1:8b

@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+  <question type="multichoice" format="aiken">
+    <name>
+      <text>Lý thuyết - Q1</text>
+    </name>
+    <questiontext format="html">
+      <text>Giải thích ý nghĩa của toán tử `&amp;` khi được sử dụng trong ngữ cảnh trỏ.</text>
+    </questiontext>
+    <general/>
+    <answer fraction="100">
+      <text>Toán tử `&amp;` trả về địa chỉ bộ nhớ của một biến.</text>
+    </answer>
+    <answer fraction="0">
+      <text>Toán tử `&amp;` được dùng để thay đổi giá trị của một biến.</text>
+    </answer>
+    <answer fraction="0">
+      <text>Toán tử `&amp;` cộng hai biến với nhau.</text>
+    </answer>
+    <answer fraction="0">
+      <text>Toán tử `&amp;` trừ địa chỉ bộ nhớ của hai biến.</text>
+    </answer>
+    <shuffle>1</shuffle>
+    <single>true</single>
+  </question>
+  <question type="multichoice" format="aiken">
+    <name>
+      <text>Logic - Q2</text>
+    </name>
+    <questiontext format="html">
+      <text>Biến được sử dụng để lưu trữ giá trị dữ liệu trong quá trình thực hiện chương trình. Tuy nhiên, sau khi khai báo biến, giá trị ban đầu của biến là gì?</text>
+    </questiontext>
+    <general/>
+    <answer fraction="100">
+      <text>Không có giá trị</text>
+    </answer>
+    <answer fraction="0">
+      <text>Giá trị ngẫu nhiên</text>
+    </answer>
+    <answer fraction="0">
+      <text>Giá trị mặc định</text>
+    </answer>
+    <answer fraction="0">
+      <text>Giá trị đã được gán</text>
+    </answer>
+    <shuffle>1</shuffle>
+    <single>true</single>
+  </question>
+  <question type="multichoice" format="aiken">
+    <name>
+      <text>Code C - Q3</text>
+    </name>
+    <questiontext format="html">
+      <text>Trong ngôn ngữ lập trình C, vòng lặp `while` được sử dụng khi nào?</text>
+    </questiontext>
+    <general/>
+    <answer fraction="100">
+      <text>Khi bạn muốn thực hiện một khối lệnh một cách lặp đi lặp lại cho đến khi một điều kiện xác định trước đóng vai trò.</text>
+    </answer>
+    <answer fraction="0">
+      <text>Khi bạn muốn thực hiện một khối lệnh chỉ khi điều kiện đúng.</text>
+    </answer>
+    <answer fraction="0">
+      <text>Khi cần phải sử dụng biến toàn cục trong toàn bộ hàm.</text>
+    </answer>
+    <answer fraction="0">
+      <text>Khi cần phải thay đổi giá trị của một biến lặp tăng dần theo mỗi vòng lặp.</text>
+    </answer>
+    <shuffle>1</shuffle>
+    <single>true</single>
+  </question>
+  <question type="multichoice" format="aiken">
+    <name>
+      <text>Lỗi sai Code - Q4</text>
+    </name>
+    <questiontext format="html">
+      <text>Trong chương trình, nếu có khai báo `char *Ten;` và ta muốn lưu trữ một chuỗi ký tự vào biến con trỏ Ten đang chỉ đến, thì phải khai báo nơi lưu trữ dữ liệu như thế nào?</text>
+    </questiontext>
+    <general/>
+    <answer fraction="100">
+      <text>Không cần khai báo gì thêm.</text>
+    </answer>
+    <answer fraction="0">
+      <text>Sử dụng `char Ten[10];`</text>
+    </answer>
+    <answer fraction="0">
+      <text>Sử dụng `malloc(10);`</text>
+    </answer>
+    <answer fraction="0">
+      <text>Sử dụng `Ten = (char*)malloc(10);`</text>
+    </answer>
+    <shuffle>1</shuffle>
+    <single>true</single>
+  </question>
+</quiz>
