@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-⚡ QUICK TEST - Test nhanh chức năng sinh câu hỏi & đánh giá
-Dùng khi muốn test mà không cần chạy full pipeline
+⚡ QUICK TEST - So sánh và test nhanh câu hỏi
+Chế độ: So sánh 2 model / So sánh 2 loại câu hỏi
 """
 
 import chromadb
@@ -36,11 +36,8 @@ Chỉ trả lời số."""
     except:
         return 0.5
 
-def test_question(topic, model, question_type):
-    """Test sinh & đánh giá 1 câu hỏi"""
-    print(f"\n🧪 {question_type.ljust(15)} | {model}")
-    print("-" * 50)
-    
+def generate_question(topic, model, question_type):
+    """Sinh 1 câu hỏi"""
     try:
         # Lấy context
         results = collection.query(query_texts=[topic], n_results=1)
@@ -53,50 +50,160 @@ def test_question(topic, model, question_type):
         
         # Đánh giá 3 metrics
         faith = evaluate_score(context, question, "faithfulness")
-        time.sleep(0.3)
+        time.sleep(0.2)
         relev = evaluate_score(topic, question, "relevancy")
-        time.sleep(0.3)
+        time.sleep(0.2)
         qual = evaluate_score("", question, "quality")
         
         avg = (faith + relev + qual) / 3
         
-        # In kết quả
-        print(f"Câu: {question[:60]}...")
-        print(f"Scores: Faith={faith:.2f} | Relev={relev:.2f} | Quality={qual:.2f} | Avg={avg:.2f}")
-        print(f"Status: {'✅ Pass' if avg >= 0.35 else '⚠️  Low'}")
-        
-        return avg
-        
+        return {
+            'question': question,
+            'faith': faith,
+            'relev': relev,
+            'qual': qual,
+            'avg': avg
+        }
     except Exception as e:
         print(f"❌ Error: {str(e)}")
-        return 0
+        return None
+
+def compare_models():
+    """So sánh 2 model cùng topic"""
+    print("""
+╔════════════════════════════════════════════════════════════╗
+║           🔄 SO SÁNH 2 MODEL TRÊN CÙNG TOPIC              ║
+╚════════════════════════════════════════════════════════════╝
+    """)
+    
+    topic = "Giải thuật là gì"
+    model1 = "qwen2.5:7b"
+    model2 = "llama3.1:8b"
+    qtype = "Lý thuyết"
+    
+    print(f"\n📌 Topic: {topic}")
+    print(f"📌 Loại câu: {qtype}")
+    print(f"\n🟦 Model 1: {model1}")
+    print(f"🟩 Model 2: {model2}\n")
+    
+    result1 = generate_question(topic, model1, qtype)
+    print("⏳ Generating model 2...")
+    time.sleep(1)
+    result2 = generate_question(topic, model2, qtype)
+    
+    # So sánh
+    print("\n" + "="*70)
+    print("📊 KẾT QUẢ SO SÁNH")
+    print("="*70 + "\n")
+    
+    print(f"🟦 {model1}")
+    print(f"   Câu: {result1['question'][:80]}...")
+    print(f"   Faithfulness: {result1['faith']:.2f}")
+    print(f"   Relevancy:    {result1['relev']:.2f}")
+    print(f"   Quality:      {result1['qual']:.2f}")
+    print(f"   ⭐ TRUNG BÌNH: {result1['avg']:.2f} {'✅ Pass' if result1['avg'] >= 0.35 else '⚠️  Low'}")
+    
+    print()
+    
+    print(f"🟩 {model2}")
+    print(f"   Câu: {result2['question'][:80]}...")
+    print(f"   Faithfulness: {result2['faith']:.2f}")
+    print(f"   Relevancy:    {result2['relev']:.2f}")
+    print(f"   Quality:      {result2['qual']:.2f}")
+    print(f"   ⭐ TRUNG BÌNH: {result2['avg']:.2f} {'✅ Pass' if result2['avg'] >= 0.35 else '⚠️  Low'}")
+    
+    print("\n" + "="*70)
+    print("🏆 KÊTT LUẬN")
+    print("="*70)
+    
+    if result1['avg'] > result2['avg']:
+        diff = result1['avg'] - result2['avg']
+        print(f"   🟦 {model1} tốt hơn {diff:.2f} điểm")
+    elif result2['avg'] > result1['avg']:
+        diff = result2['avg'] - result1['avg']
+        print(f"   🟩 {model2} tốt hơn {diff:.2f} điểm")
+    else:
+        print(f"   ⚖️  Cả hai bằng nhau!")
+
+def compare_question_types():
+    """So sánh 2 loại câu hỏi"""
+    print("""
+╔════════════════════════════════════════════════════════════╗
+║        🔄 SO SÁNH 2 LOẠI CÂU HỎI TRÊN CÙNG MODEL         ║
+╚════════════════════════════════════════════════════════════╝
+    """)
+    
+    topic = "Cấu trúc vòng lặp for"
+    model = "deepseek-coder-v2"
+    qtype1 = "Lý thuyết"
+    qtype2 = "Code thực hành"
+    
+    print(f"\n📌 Topic: {topic}")
+    print(f"📌 Model: {model}")
+    print(f"\n🟦 Loại 1: {qtype1}")
+    print(f"🟩 Loại 2: {qtype2}\n")
+    
+    result1 = generate_question(topic, model, qtype1)
+    print("⏳ Generating loại 2...")
+    time.sleep(1)
+    result2 = generate_question(topic, model, qtype2)
+    
+    # So sánh
+    print("\n" + "="*70)
+    print("📊 KẾT QUẢ SO SÁNH")
+    print("="*70 + "\n")
+    
+    print(f"🟦 {qtype1}")
+    print(f"   Câu: {result1['question'][:80]}...")
+    print(f"   Faithfulness: {result1['faith']:.2f}")
+    print(f"   Relevancy:    {result1['relev']:.2f}")
+    print(f"   Quality:      {result1['qual']:.2f}")
+    print(f"   ⭐ TRUNG BÌNH: {result1['avg']:.2f} {'✅ Pass' if result1['avg'] >= 0.35 else '⚠️  Low'}")
+    
+    print()
+    
+    print(f"🟩 {qtype2}")
+    print(f"   Câu: {result2['question'][:80]}...")
+    print(f"   Faithfulness: {result2['faith']:.2f}")
+    print(f"   Relevancy:    {result2['relev']:.2f}")
+    print(f"   Quality:      {result2['qual']:.2f}")
+    print(f"   ⭐ TRUNG BÌNH: {result2['avg']:.2f} {'✅ Pass' if result2['avg'] >= 0.35 else '⚠️  Low'}")
+    
+    print("\n" + "="*70)
+    print("🏆 KẾT LUẬN")
+    print("="*70)
+    
+    if result1['avg'] > result2['avg']:
+        diff = result1['avg'] - result2['avg']
+        print(f"   🟦 {qtype1} tốt hơn {diff:.2f} điểm")
+    elif result2['avg'] > result1['avg']:
+        diff = result2['avg'] - result1['avg']
+        print(f"   🟩 {qtype2} tốt hơn {diff:.2f} điểm")
+    else:
+        print(f"   ⚖️  Cả hai bằng nhau!")
 
 def main():
     print("""
-╔════════════════════════════════════════════════╗
-║    ⚡ QUICK TEST - SINH CÂU HỎI & ĐÁNH GIÁ   ║
-╚════════════════════════════════════════════════╝
+╔════════════════════════════════════════════════════════════╗
+║    ⚡ QUICK TEST - SO SÁNH NHANH                          ║
+╚════════════════════════════════════════════════════════════╝
+
+Lựa chọn:
+  1️⃣  So sánh 2 MODEL (cùng topic)
+  2️⃣  So sánh 2 LOẠI CÂU HỎI (cùng model)
+  0️⃣  Thoát
     """)
     
-    tests = [
-        ("Giải thuật là gì", "qwen2.5:7b", "Lý thuyết"),
-        ("Hoán đổi hai biến", "llama3.1:8b", "Logic"),
-        ("Cấu trúc vòng lặp for", "deepseek-coder-v2", "Code C"),
-    ]
+    choice = input("Chọn (0-2): ").strip()
     
-    scores = []
-    for topic, model, qtype in tests:
-        score = test_question(topic, model, qtype)
-        scores.append((qtype, score))
-        time.sleep(1)
-    
-    # Summary
-    print(f"\n{'='*50}")
-    print("📊 TÓM TẮT")
-    print(f"{'='*50}")
-    for qtype, score in scores:
-        status = "✅" if score >= 0.35 else "⚠️ "
-        print(f"  {status} {qtype.ljust(15)}: {score:.2f}")
+    if choice == "1":
+        compare_models()
+    elif choice == "2":
+        compare_question_types()
+    elif choice == "0":
+        print("Thoát!")
+    else:
+        print("❌ Lựa chọn không hợp lệ!")
 
 if __name__ == "__main__":
     main()

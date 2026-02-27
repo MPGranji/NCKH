@@ -4,20 +4,20 @@
       <text>Lý thuyết - Q1</text>
     </name>
     <questiontext format="html">
-      <text>Giải thích ý nghĩa của toán tử `&amp;` khi được sử dụng trong ngữ cảnh trỏ.</text>
+      <text>Câu hỏi trắc nghiệm</text>
     </questiontext>
     <general/>
     <answer fraction="100">
-      <text>Toán tử `&amp;` trả về địa chỉ bộ nhớ của một biến.</text>
+      <text>Toán tử `&amp;` trong C++ dùng để trả về địa chỉ bộ nhớ của một biến.</text>
     </answer>
     <answer fraction="0">
-      <text>Toán tử `&amp;` được dùng để thay đổi giá trị của một biến.</text>
+      <text>Toán tử `&amp;` trong C++ dùng để gán giá trị cho một biến.</text>
     </answer>
     <answer fraction="0">
-      <text>Toán tử `&amp;` cộng hai biến với nhau.</text>
+      <text>Toán tử `&amp;` trong C++ dùng để so sánh hai biến.</text>
     </answer>
     <answer fraction="0">
-      <text>Toán tử `&amp;` trừ địa chỉ bộ nhớ của hai biến.</text>
+      <text>Toán tử `&amp;` trong C++ dùng để cộng hai số nguyên.</text>
     </answer>
     <shuffle>1</shuffle>
     <single>true</single>
@@ -27,20 +27,20 @@
       <text>Logic - Q2</text>
     </name>
     <questiontext format="html">
-      <text>Biến được sử dụng để lưu trữ giá trị dữ liệu trong quá trình thực hiện chương trình. Tuy nhiên, sau khi khai báo biến, giá trị ban đầu của biến là gì?</text>
+      <text>Khi khai báo biến, việc đặt tên biến phải tuân theo nguyên tắc nào?</text>
     </questiontext>
     <general/>
     <answer fraction="100">
-      <text>Không có giá trị</text>
+      <text>Đặt tên biến tùy ý</text>
     </answer>
     <answer fraction="0">
-      <text>Giá trị ngẫu nhiên</text>
+      <text>Đặt tên biến không được trùng lặp với các khóa ngoại</text>
     </answer>
     <answer fraction="0">
-      <text>Giá trị mặc định</text>
+      <text>Đặt tên biến phải ngắn gọn và dễ nhớ</text>
     </answer>
     <answer fraction="0">
-      <text>Giá trị đã được gán</text>
+      <text>Đặt tên biến có thể bắt đầu bằng số</text>
     </answer>
     <shuffle>1</shuffle>
     <single>true</single>
@@ -50,20 +50,20 @@
       <text>Code C - Q3</text>
     </name>
     <questiontext format="html">
-      <text>Trong ngôn ngữ lập trình C, vòng lặp `while` được sử dụng khi nào?</text>
+      <text>Trong ngôn ngữ lập trình C, vòng lặp `while` được sử dụng để thực hiện công việc nào sau đây?</text>
     </questiontext>
     <general/>
     <answer fraction="100">
-      <text>Khi bạn muốn thực hiện một khối lệnh một cách lặp đi lặp lại cho đến khi một điều kiện xác định trước đóng vai trò.</text>
+      <text>Lặp lại một khối lệnh vô hạn lần.</text>
     </answer>
     <answer fraction="0">
-      <text>Khi bạn muốn thực hiện một khối lệnh chỉ khi điều kiện đúng.</text>
+      <text>Lặp lại một khối lệnh cho tới khi điều kiện trở thành sai.</text>
     </answer>
     <answer fraction="0">
-      <text>Khi cần phải sử dụng biến toàn cục trong toàn bộ hàm.</text>
+      <text>Chỉ lặp lại một khối lệnh một số lần xác định trước.</text>
     </answer>
     <answer fraction="0">
-      <text>Khi cần phải thay đổi giá trị của một biến lặp tăng dần theo mỗi vòng lặp.</text>
+      <text>Lặp lại một khối lệnh với số lần chưa biết từ đầu.</text>
     </answer>
     <shuffle>1</shuffle>
     <single>true</single>
@@ -73,20 +73,20 @@
       <text>Lỗi sai Code - Q4</text>
     </name>
     <questiontext format="html">
-      <text>Trong chương trình, nếu có khai báo `char *Ten;` và ta muốn lưu trữ một chuỗi ký tự vào biến con trỏ Ten đang chỉ đến, thì phải khai báo nơi lưu trữ dữ liệu như thế nào?</text>
+      <text>Trong chương trình, nếu có khai báo `char *Ten;`, điều gì sẽ xảy ra khi thực hiện phép toán `*Ten = 'A';`?</text>
     </questiontext>
     <general/>
     <answer fraction="100">
-      <text>Không cần khai báo gì thêm.</text>
+      <text>Lỗi biên dịch vì không có bộ nhớ được cấp phát cho con trỏ Ten.</text>
     </answer>
     <answer fraction="0">
-      <text>Sử dụng `char Ten[10];`</text>
+      <text>Không có lỗi, và giá trị 'A' sẽ được gán cho biến được trỏ bởi Ten.</text>
     </answer>
     <answer fraction="0">
-      <text>Sử dụng `malloc(10);`</text>
+      <text>Lỗi thời gian chạy do không có phần tử nào để lưu giá trị 'A'.</text>
     </answer>
     <answer fraction="0">
-      <text>Sử dụng `Ten = (char*)malloc(10);`</text>
+      <text>Không có lỗi, và biến Ten sẽ trỏ đến mã ASCII của ký tự 'A'.</text>
     </answer>
     <shuffle>1</shuffle>
     <single>true</single>
