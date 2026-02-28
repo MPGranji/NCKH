@@ -1,6 +1,6 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 """
-🔍 TEST DEEPSEEK CODE - So sánh 3 model trên câu hỏi CODE
+TEST DEEPSEEK CODE - So sánh 3 model trên câu hỏi CODE
 So sánh: deepseek-coder-v2 vs qwen2.5:7b vs llama3.1:8b
 """
 
@@ -66,14 +66,14 @@ def generate_code_question(topic, model):
             'model': model
         }
     except Exception as e:
-        print(f"❌ Error ({model}): {str(e)}")
+        print(f"[ERROR] Error ({model}): {str(e)}")
         return None
 
 def main():
     print("""
-╔════════════════════════════════════════════════════════════╗
-║    🔍 TEST DEEPSEEK CODE - SO SÁNH 3 MODEL               ║
-╚════════════════════════════════════════════════════════════╝
+════════════════════════════════════════════════════════════
+ TEST DEEPSEEK CODE - COMPARE 3 MODELS
+════════════════════════════════════════════════════════════
     """)
     
     topic = "Cấu trúc vòng lặp for"
@@ -85,50 +85,49 @@ def main():
         "llama3.1:8b"
     ]
     
-    print(f"\n📌 Topic: {topic}")
-    print(f"📌 Loại câu: {qtype}")
-    print(f"\n🔄 Sinh câu hỏi từ 3 model...\n")
+    print(f"\nChủ đề: {topic}")
+    print(f"Loại câu: {qtype}")
+    print(f"\nSinh câu hỏi từ 3 model...\n")
     
     results = []
-    colors = ["🟦", "🟨", "🟩"]
     
     for i, model in enumerate(models):
-        print(f"   {colors[i]} {model}...", end=" ", flush=True)
+        print(f"   [{i+1}] {model}...", end=" ", flush=True)
         result = generate_code_question(topic, model)
         if result:
             results.append(result)
-            print("✅")
+            print("[OK]")
         else:
-            print("❌")
+            print("[FAILED]")
         time.sleep(1)
     
     # So sánh
     print("\n" + "="*70)
-    print("📊 KẾT QUẢ SO SÁNH CHI TIẾT")
+    print("KẾT QUẢ SO SÁNH CHI TIẾT")
     print("="*70 + "\n")
     
     for i, result in enumerate(results):
-        print(f"{colors[i]} {result['model'].ljust(20)}")
+        print(f"[Model {i+1}] {result['model'].ljust(20)}")
         print(f"   Câu: {result['question'][:90]}...")
-        print(f"   ├─ Faithfulness: {result['faith']:.2f}")
-        print(f"   ├─ Relevancy:    {result['relev']:.2f}")
-        print(f"   ├─ Quality:      {result['qual']:.2f}")
-        print(f"   └─ ⭐ TRUNG BÌNH: {result['avg']:.2f} {'✅ Pass' if result['avg'] >= 0.35 else '⚠️  Low'}")
+        print(f"   Faithfulness: {result['faith']:.2f}")
+        print(f"   Relevancy:    {result['relev']:.2f}")
+        print(f"   Quality:      {result['qual']:.2f}")
+        status = "PASS" if result['avg'] >= 0.35 else "LOW"
+        print(f"   AVG: {result['avg']:.2f} [{status}]")
         print()
     
     # Xếp hạng
     print("="*70)
-    print("🏆 BẢNG XẾP HẠNG")
+    print("BẢNG XẾP HẠNG")
     print("="*70 + "\n")
     
     sorted_results = sorted(results, key=lambda x: x['avg'], reverse=True)
     
-    medals = ["🥇", "🥈", "🥉"]
     for i, result in enumerate(sorted_results):
-        print(f"   {medals[i]} {i+1}. {result['model'].ljust(25)} - {result['avg']:.2f}")
+        print(f"   [{i+1}] {result['model'].ljust(25)} - {result['avg']:.2f}")
     
     print("\n" + "="*70)
-    print("💬 NHẬN XÉT")
+    print("NHẬN XÉT")
     print("="*70)
     
     best = sorted_results[0]
@@ -136,14 +135,15 @@ def main():
     diff = best['avg'] - worst['avg']
     
     print(f"""
-   ✅ Model tốt nhất: {best['model']}
+   [BEST] Model tốt nhất: {best['model']}
       Điểm: {best['avg']:.2f}
    
-   ⚠️  Model yếu nhất: {worst['model']}
+   [WORST] Model yếu nhất: {worst['model']}
       Điểm: {worst['avg']:.2f}
    
-   📈 Chênh lệch: {diff:.2f} điểm
+   [DIFF] Chênh lệch: {diff:.2f} điểm
     """)
 
 if __name__ == "__main__":
     main()
+

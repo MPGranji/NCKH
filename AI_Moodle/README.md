@@ -1,16 +1,16 @@
-# 🤖 AI Moodle Question Generator
+# AI Moodle Question Generator
 
-Hệ thống tự động sinh câu hỏi trắc nghiệm từ tài liệu giáo trình và tích hợp với Moodle LMS.
+Hệ thống tự động sinh câu hỏi trắc nghiệm chất lượng cao từ tài liệu giáo trình và tích hợp với Moodle LMS.
 
-## 📋 Tính năng
+## Tính năng
 
-- ✅ Nạp dữ liệu từ file text vào ChromaDB Vector Database
-- ✅ Sinh câu hỏi tự động từ 3 local LLM models (qwen2.5, llama3.1, deepseek-coder)
-- ✅ Đánh giá chất lượng câu hỏi (faithfulness, relevancy, quality)
-- ✅ Export câu hỏi sang format XML Aiken cho Moodle
-- ✅ Tích hợp API với Moodle (tùy chọn)
+- Nạp dữ liệu từ file text vào ChromaDB Vector Database
+- Sinh câu hỏi tự động từ 3 local LLM models (Qwen2.5, Llama3.1, Deepseek-coder-v2)
+- Đánh giá chất lượng câu hỏi tự động (faithfulness, relevancy, quality)
+- Export câu hỏi sang format XML Aiken cho Moodle
+- Tích hợp API với Moodle (tùy chọn)
 
-## 🚀 Cách sử dụng
+## Bắt đầu nhanh
 
 ### 1. Chuẩn bị
 
@@ -22,19 +22,22 @@ pip install -r requirement.txt
 ollama pull qwen2.5:7b
 ollama pull llama3.1:8b
 ollama pull deepseek-coder-v2
+
+# Khởi động Ollama
+ollama serve
 ```
 
-### 2. Chạy Pipeline Chính
+### 2. Chạy Pipeline chính
 
 ```bash
 python main.py
 ```
 
 Pipeline sẽ tự động thực hiện:
-1. **Nạp dữ liệu** - Load giáo trình vào ChromaDB
-2. **Sinh câu hỏi** - Sinh 4 dạng câu hỏi từ các model khác nhau
-3. **Đánh giá** - Kiểm tra chất lượng của mỗi câu hỏi
-4. **Export XML** - Lưu câu hỏi sang file `questions_export.xml`
+1. Nạp dữ liệu - Load tài liệu vào ChromaDB
+2. Sinh câu hỏi - Sinh câu từ các model khác nhau
+3. Đánh giá chất lượng - Kiểm tra từng câu hỏi
+4. Export XML - Lưu câu hỏi vào `questions_export.xml`
 
 ### 3. Chạy các bước riêng lẻ
 
@@ -46,99 +49,136 @@ python ingest_data.py
 - Tách thành chunks theo cấu trúc `[CHUNK X | TRANG Y]`
 - Lưu vào ChromaDB tại `db_moodle/`
 
-#### B. Sinh & Đánh giá (thử nghiệm)
+#### B. So sánh model nhanh
 ```bash
-python test_experiment_eval.py
+python test_quick.py
 ```
-- Sinh 4 dạng câu hỏi
-- Đánh giá chất lượng bằng 3 metrics
-- Hiển thị bảng tóm tắt kết quả
+Menu tùy chọn:
+- So sánh 2 model trên cùng topic
+- So sánh 2 loại câu hỏi trên cùng model
 
-#### C. Export sang XML
+#### C. Test câu hỏi code
+```bash
+python test_deepseek_code.py
+```
+- So sánh cả 3 models trên câu hỏi code
+- Hiển thị báo cáo hiệu suất chi tiết
+
+#### D. Sinh & Export câu hỏi
 ```bash
 python export_to_moodle.py
 ```
-- Sinh câu hỏi từ 4 topics
-- Lọc những câu đạt chuẩn (score > 0.35)
-- Export ra file `questions_export.xml`
+- Sinh câu hỏi từ tất cả topic
+- Lọc theo điểm chất lượng (> 0.35)
+- Export ra `questions_export.xml` định dạng Aiken
 
-#### D. Tích hợp Moodle API (tùy chọn)
+#### E. Xem dữ liệu ChromaDB
+```bash
+python view_chroma.py
+```
+- Duyệt collections và documents
+- Tìm kiếm theo semantic similarity
+- Debug dữ liệu đã nạp
+
+#### F. Tích hợp Moodle API (tùy chọn)
 ```bash
 python moodle_integration.py
 ```
-- Hiển thị hướng dẫn cấu hình Moodle Web Services
-- Cho phép upload câu hỏi trực tiếp qua API
+- Kiểm tra kết nối Moodle
+- Lấy danh sách khóa học
+- Upload câu hỏi qua REST API
 
-## 📂 Cấu trúc dự án
+## Cấu trúc dự án
 
 ```
 AI_Moodle/
-├── main.py                      # Pipeline chính
-├── ingest_data.py              # Nạp dữ liệu vào ChromaDB
-├── test_experiment_eval.py      # Thử nghiệm và đánh giá
-├── export_to_moodle.py         # Export sang XML
-├── moodle_integration.py        # Tích hợp Moodle API
+├── main.py                    # Orchestrator pipeline chính
+├── ingest_data.py             # Module nạp dữ liệu
+├── test_quick.py              # Tool so sánh model nhanh
+├── test_deepseek_code.py      # Đánh giá câu hỏi code
+├── export_to_moodle.py        # Sinh câu & export XML
+├── moodle_integration.py      # API wrapper cho Moodle
+├── view_chroma.py             # Viewer ChromaDB
 ├── data/
-│   └── sample_data.txt         # Dữ liệu giáo trình
-├── db_moodle/                  # ChromaDB storage
+│   └── sample_data.txt        # Tài liệu giáo trình
+├── db_moodle/                 # Lưu trữ ChromaDB
 │   ├── chroma.sqlite3
-│   └── [uuid]/
-├── questions_export.xml        # Output: Câu hỏi XML (tạo sau khi chạy)
-└── requirement.txt             # Dependencies
+│   └── [collection folders]
+├── questions_export.xml       # Câu hỏi đã sinh (tạo sau khi chạy)
+├── README.md                  # File này
+├── REPORT.md                  # Báo cáo toàn diện (tiếng Việt)
+├── PIPELINE.md                # Hướng dẫn workflow chi tiết (tiếng Anh)
+└── requirement.txt            # Python dependencies
 ```
 
-## 🔧 Các file chính
+## Các module chính
 
-### `main.py`
-Orchestrator chính - chạy toàn bộ pipeline 4 bước
+### main.py
+Orchestrator chính cho toàn bộ pipeline.
 
-**Models sử dụng:**
-- `qwen2.5:7b` - Sinh câu hỏi lý thuyết, tốt với tiếng Việt
-- `llama3.1:8b` - Sinh câu hỏi logic, tốt với reasoning
-- `deepseek-coder-v2` - Sinh câu hỏi code, tốt với lập trình
+**Các function:**
+- `print_header()` - Hiển thị banner chào mừng
+- `run_step_1_ingestion()` - Thực hiện nạp dữ liệu
+- `run_step_2_evaluation()` - Chạy đánh giá model
+- `run_step_3_export()` - Sinh và export câu hỏi
+- `run_step_4_moodle_optional()` - Upload tùy chọn lên Moodle
 
-### `export_to_moodle.py`
-Chuyển đổi câu hỏi sang XML format Moodle
+### ingest_data.py
+Nạp tài liệu giáo trình vào ChromaDB để tìm kiếm semantic.
 
-**Hàm chính:**
-- `generate_questions()` - Sinh + đánh giá 1 câu hỏi
-- `create_moodle_xml()` - Tạo XML format Moodle
-- `export_to_file()` - Lưu file XML
+**Các function chính:**
+- `ingest()` - Parse chunks và lưu embeddings
 
-### `moodle_integration.py`
-Kết nối với Moodle qua REST API
+### export_to_moodle.py
+Sinh câu hỏi và export định dạng Aiken.
 
-**Sử dụng:**
-```python
-from moodle_integration import MoodleIntegration
+**Các function chính:**
+- `generate_question()` - Sinh và đánh giá một câu hỏi
+- `evaluate_score()` - Tính 3 metrics chất lượng
+- `export_to_aiken()` - Tạo XML định dạng Aiken
+- `batch_generate()` - Sinh batch câu hỏi
 
-moodle = MoodleIntegration(
-    moodle_url="http://localhost/moodle",
-    token="your_token_here"
-)
+### moodle_integration.py
+API wrapper REST cho Moodle.
 
-# Test kết nối
-moodle.test_connection()
+**Các method chính:**
+- `get_site_info()` - Test kết nối
+- `get_courses()` - Lấy danh sách khóa học
+- `create_question()` - Tạo câu hỏi trong course
+- `create_quiz()` - Tạo module quiz
+- `batch_import_questions()` - Import hàng loạt
 
-# Lấy danh sách khóa học
-courses = moodle.get_courses()
-```
+### test_quick.py & test_deepseek_code.py
+Tool so sánh và đánh giá model.
 
-## 📊 Metrics Đánh giá
+**Tính năng:**
+- So sánh models trên cùng topic
+- So sánh loại câu hỏi trên cùng model
+- Sinh báo cáo hiệu suất chi tiết
 
-Hệ thống sử dụng 3 metrics để đánh giá chất lượng câu hỏi:
+### view_chroma.py
+Utility để khám phá ChromaDB.
+
+**Tính năng:**
+- Xem thống kê collection
+- Tìm kiếm theo semantic similarity
+- Lấy mẫu document để kiểm tra
+
+## Metrics đánh giá chất lượng
+
+Hệ thống sử dụng 3 metrics tự động để đánh giá câu hỏi:
 
 | Metric | Mô tả | Thang điểm |
 |--------|-------|-----------|
-| **Faithfulness** | Câu hỏi có dựa trên context không? | 0.0 - 1.0 |
-| **Relevancy** | Câu hỏi có liên quan đến topic không? | 0.0 - 1.0 |
-| **Quality** | Câu hỏi có rõ ràng, đúng format không? | 0.0 - 1.0 |
+| Faithfulness | Câu hỏi có dựa trên context không? | 0.0 - 1.0 |
+| Relevancy | Câu hỏi có liên quan đến topic không? | 0.0 - 1.0 |
+| Quality | Câu hỏi có rõ ràng, đúng format không? | 0.0 - 1.0 |
 
-**Ngưỡng lọc**: Score trung bình > 0.35 mới được export
+**Ngưỡng chấp nhận:** Điểm trung bình >= 0.35
 
-## 📝 Format Câu hỏi
+## Định dạng câu hỏi
 
-Câu hỏi được sinh theo format **Aiken** (chuẩn Moodle):
+Câu hỏi được sinh định dạng Aiken (chuẩn Moodle):
 
 ```
 Nêu khái niệm của biến trong lập trình C?
@@ -150,124 +190,124 @@ D) Giá trị khởi tạo
 ANSWER: A
 ```
 
-## 🔌 Tích hợp Moodle
+## Tích hợp Moodle
 
 ### Cách 1: Upload thủ công (Khuyến cáo)
-1. Đăng nhập Moodle
+1. Đăng nhập vào Moodle
 2. Vào Course → Settings → Question bank → Import
 3. Chọn file: `questions_export.xml`
-4. Import format: **Aiken**
+4. Định dạng import: **Aiken**
 5. Click "Upload and import"
 
 ### Cách 2: Upload qua API (Nâng cao)
-1. Setup Moodle Web Services (xem `moodle_integration.py`)
+1. Cấu hình Moodle Web Services (xem phần bên dưới)
 2. Chạy:
 ```bash
 python moodle_integration.py
 ```
-3. Nhập Moodle URL, Token, Course ID
-4. API sẽ tự động upload câu hỏi
+3. Nhập URL Moodle, token và course ID
+4. API tự động upload câu hỏi
 
-## 📋 Cấu hình Moodle Web Services
+## Cấu hình Moodle Web Services
 
-**Cho Cách 2 (API):**
+Cho Cách 2 (API upload):
 
-1. **Enable Web Services** (Admin)
+1. **Bật Web Services** (Admin)
    - Site Administration → Advanced features
-   - ✓ Enable web services
+   - Check "Enable web services"
 
 2. **Tạo Service**
    - Site Administration → Plugins → Web services → Manage services
-   - Name: "AI Question Generator"
-   - ✓ Enable service
-   - ✓ Token generated
+   - Service name: "AI Question Generator"
+   - Check "Enable service"
+   - Check "Generate token"
 
-3. **Add Functions**
-   - core_course_get_courses
-   - core_question_create_questions
-   - core_question_get_categories
-
-4. **Tạo Token**
+3. **Tạo Token**
    - Site Administration → Plugins → Web services → Manage tokens
-   - Copy token và dùng trong script
+   - Tạo token và copy để dùng trong script
 
-## 🐛 Troubleshooting
+## Khắc phục sự cố
 
-### Lỗi: "Không tìm thấy dữ liệu cho topic"
-- Kiểm tra file `data/sample_data.txt` có tồn tại không
-- Chạy `python ingest_data.py` trước
+| Lỗi | Giải pháp |
+|-----|----------|
+| "Data not found for topic" | Chạy `python ingest_data.py` trước để nạp dữ liệu |
+| "Model not found" | Đảm bảo Ollama đang chạy với `ollama serve` |
+| "Aiken format parse error" | Kiểm tra output LLM theo format A) B) C) D) ANSWER: |
+| "Moodle API connection failed" | Kiểm tra URL, token hợp lệ, kết nối mạng |
+| "Low quality scores" | Điều chỉnh từ khóa topic hoặc thử model khác |
+| "Unicode/encoding issues" | Đảm bảo UTF-8 encoding trên toàn bộ |
 
-### Lỗi: "Model không tìm thấy"
-- Kiểm tra ollama đang chạy không
-- Chạy `ollama serve` trong terminal khác
-- Pull model: `ollama pull qwen2.5:7b`
+## Hiệu suất
 
-### Lỗi: "Không parse được format Aiken"
-- Model đang sinh câu hỏi không đúng format
-- Thử tăng prompt specificity hoặc đổi model khác
-- Giảm eval_threshold nếu cần
+- Nạp dữ liệu: ~10-30 giây (tùy kích thước file)
+- Sinh một câu hỏi: ~3-5 giây (LLM inference)
+- Batch 18 câu: ~2-3 phút
+- Upload Moodle API: ~1-2 giây/câu
 
-### Lỗi: "Moodle API connection failed"
-- Kiểm tra Moodle URL có đúng không
-- Kiểm tra Web Services có enable không
-- Token có hợp lệ không
-- Firewall có block không
+## Các model LLM
 
-## 📈 Kết quả
+Hệ thống sử dụng ba model LLM open-source qua Ollama:
 
-Sau khi chạy xong, bạn sẽ có:
+1. **Deepseek-coder-v2** - Chuyên ngành code generation và phân tích
+2. **Qwen2.5:7b** - Mục đích chung balanced với reasoning mạnh
+3. **Llama3.1:8b** - Hiệu suất tốt trên lý thuyết và giải thích
 
-- ✅ 4 câu hỏi trắc nghiệm
-- ✅ File `questions_export.xml` sẵn sàng import
-- ✅ Log thử nghiệm chi tiết
-- ✅ Bảng tóm tắt scores
-
-**Ví dụ output:**
-```
-📊 BẢNG ĐIỂM
-Loại          Model              Trung thực  Liên quan  Chất lượng  Trung bình
-─────────────────────────────────────────────────────────────────────────────
-Lý thuyết     qwen2.5:7b         0.80        0.00       0.60       0.47
-Logic         llama3.1:8b        0.50        0.50       0.60       0.53
-Code C        deepseek-coder-v2  0.00        0.50       0.70       0.40
-Lỗi sai Code  deepseek-coder-v2  0.00        0.50       0.80       0.43
-─────────────────────────────────────────────────────────────────────────────
-TB CHUNG                          0.33        0.38       0.68       0.46
-```
-
-## 🔄 Quy trình tự động
+## Luồng dữ liệu
 
 ```
-Tài liệu PDF/Text
-       ↓
-   Nạp vào ChromaDB
-       ↓
- Truy vấn theo topic
-       ↓
- Sinh câu hỏi (3 models)
-       ↓
-   Đánh giá chất lượng
-       ↓
-  Lọc câu đạt chuẩn
-       ↓
-   Export XML Aiken
-       ↓
-  Import vào Moodle
-       ↓
-  Sinh bài kiểm tra
+sample_data.txt
+    ↓
+[ingest_data.py]
+    ↓
+ChromaDB (Embedded documents)
+    ↓
+[Query by topic]
+    ↓
+[export_to_moodle.py] + [test_*.py]
+    ↓
+LLM Models (Ollama)
+    ↓
+[Evaluate metrics]
+    ↓
+[Filter by score]
+    ↓
+questions_export.xml (Aiken format)
+    ↓
+[moodle_integration.py]
+    ↓
+Moodle Server
+    ↓
+Quiz sẵn sàng cho học viên
 ```
 
-## 📚 Tài liệu tham khảo
+## Tài liệu tham khảo
 
+- [PIPELINE.md](PIPELINE.md) - Hướng dẫn workflow chi tiết (tiếng Anh)
+- [REPORT.md](REPORT.md) - Báo cáo dự án toàn diện (tiếng Việt)
 - [Moodle Aiken Format](https://docs.moodle.org/402/en/Aiken_format)
 - [Moodle Web Services](https://docs.moodle.org/402/en/Web_services)
 - [ChromaDB Documentation](https://docs.trychroma.com/)
 - [Ollama Models](https://ollama.ai/library)
 
-## 👨‍💻 Tác giả
+## Yêu cầu
 
-Xây dựng cho dự án AI tích hợp Moodle
+Xem `requirement.txt` để biết Python dependencies:
+- chromadb
+- ollama
+- requests
+- xml.etree.ElementTree (built-in)
+- re (built-in)
+- json (built-in)
 
-## 📄 License
+## Tác giả
+
+AI Moodle Question Generator Project
+
+## License
 
 MIT License
+
+---
+
+Để biết chi tiết về workflow dự án, xem [PIPELINE.md](PIPELINE.md).
+Để xem báo cáo toàn diện, xem [REPORT.md](REPORT.md).

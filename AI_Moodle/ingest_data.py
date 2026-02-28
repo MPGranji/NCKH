@@ -22,7 +22,7 @@ def ingest():
             metadatas=[{"chunk": c_id, "page": p_num}],
             ids=[f"id_{c_id}"]
         )
-    print(f"✅ Đã nạp xong {len(chunks)} dữ liệu vào ChromaDB!")
+    print(f"Đã nạp xong {len(chunks)} dữ liệu vào ChromaDB!")
 
 if __name__ == "__main__":
     ingest()

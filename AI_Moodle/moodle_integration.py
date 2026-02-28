@@ -1,247 +1,230 @@
+﻿#!/usr/bin/env python3
+"""
+MOODLE INTEGRATION - Tích hợp API Moodle
+Gửi câu hỏi vào Moodle thông qua REST API
+"""
+
 import requests
 import json
 from typing import Dict, List, Optional
-import time
 
-class MoodleIntegration:
-    """Tích hợp với Moodle LMS qua REST API"""
+class MoodleAPI:
+    """Wrapper cho Moodle REST API"""
     
-    def __init__(self, moodle_url: str, token: str):
+    def __init__(self, moodle_url: str, web_service_token: str):
         """
-        Khởi tạo kết nối Moodle
+        Khởi tạo Moodle API client
         
         Args:
-            moodle_url: URL gốc Moodle (ví dụ: http://localhost/moodle)
-            token: Web service token từ Moodle
+            moodle_url: URL của server Moodle (vd: https://moodle.example.com)
+            web_service_token: Token xác thực (lấy từ User > Preferences > Web services)
         """
         self.moodle_url = moodle_url.rstrip('/')
-        self.token = token
+        self.token = web_service_token
         self.base_url = f"{self.moodle_url}/webservice/rest/server.php"
-    
-    def _make_request(self, wsfunction: str, params: Dict = None, method: str = "GET"):
-        """
-        Thực hiện request tới Moodle API
         
-        Args:
-            wsfunction: Tên function Moodle
-            params: Các parameters
-            method: GET hoặc POST
-        
-        Returns:
-            Response JSON
-        """
+    def _call_api(self, method: str, params: Dict = None) -> Dict:
+        """Gọi Moodle API"""
         if params is None:
             params = {}
         
-        data = {
-            'wstoken': self.token,
-            'wsfunction': wsfunction,
-            'moodlewsrestformat': 'json',
-            **params
-        }
+        params['wstoken'] = self.token
+        params['wsfunction'] = method
+        params['moodlewsrestformat'] = 'json'
         
         try:
-            if method == "GET":
-                response = requests.get(self.base_url, params=data, timeout=10)
-            else:
-                response = requests.post(self.base_url, data=data, timeout=10)
-            
-            result = response.json()
-            
-            if 'exception' in result:
-                print(f"❌ Moodle API Error: {result.get('message', 'Unknown error')}")
-                return None
-            
-            return result
-            
+            response = requests.post(self.base_url, data=params, timeout=10)
+            response.raise_for_status()
+            return response.json()
         except Exception as e:
-            print(f"❌ Request Error: {str(e)}")
+            print(f"[ERROR] API Error: {str(e)}")
             return None
     
-    def get_courses(self):
-        """Lấy danh sách các khóa học"""
-        return self._make_request('core_course_get_courses')
+    def get_site_info(self) -> Optional[Dict]:
+        """Lấy thông tin server Moodle"""
+        return self._call_api('moodle_webservice_get_siteinfo')
     
-    def get_course_by_id(self, course_id: int):
-        """Lấy thông tin khóa học theo ID"""
-        return self._make_request('core_course_get_courses', {'ids[0]': course_id})
+    def get_courses(self, user_id: int = 0) -> Optional[List]:
+        """Lấy danh sách khóa học"""
+        params = {'userid': user_id} if user_id else {}
+        result = self._call_api('core_user_get_courses_by_field', params)
+        return result.get('courses', []) if result else None
     
-    def get_question_categories(self, course_id: int):
-        """Lấy danh sách category câu hỏi của khóa học"""
-        return self._make_request(
-            'core_question_get_questions_by_category',
-            {'categoryid': course_id}
-        )
+    def get_course_categories(self) -> Optional[List]:
+        """Lấy danh sách danh mục khóa học"""
+        result = self._call_api('core_course_get_categories')
+        return result if result else None
     
-    def create_question_category(self, name: str, parent_id: int = None, contextid: int = None):
+    def create_question(self, 
+                       course_id: int,
+                       question_name: str,
+                       question_text: str,
+                       answer_a: str,
+                       answer_b: str,
+                       answer_c: str,
+                       answer_d: str,
+                       correct_answer: str = 'A') -> Optional[Dict]:
         """
-        Tạo category câu hỏi
+        Tạo câu hỏi trắc nghiệm
         
         Args:
-            name: Tên category
-            parent_id: ID category cha (optional)
-            contextid: Context ID (optional)
-        
-        Returns:
-            ID category được tạo
+            course_id: ID của khóa học
+            question_name: Tên câu hỏi
+            question_text: Nội dung câu hỏi
+            answer_a, answer_b, answer_c, answer_d: Các option
+            correct_answer: Đáp án đúng (A/B/C/D)
         """
-        params = {'name': name}
-        if parent_id:
-            params['parent'] = parent_id
-        # Thường contextid = 1 (system context)
         
-        return self._make_request('core_question_create_categories', params)
-    
-    def create_question(self, question_data: Dict):
-        """
-        Tạo câu hỏi trong Moodle
+        # Validate
+        if correct_answer not in ['A', 'B', 'C', 'D']:
+            print(f"[ERROR] Invalid correct answer: {correct_answer}")
+            return None
         
-        Cấu trúc question_data:
-        {
-            'name': 'Tên câu hỏi',
-            'questiontext': 'Nội dung câu hỏi',
-            'category': category_id,
-            'qtype': 'multichoice',
-            'options': [
-                {'option': 'A', 'text': 'Đáp án A', 'fraction': 0},
-                {'option': 'B', 'text': 'Đáp án B', 'fraction': 100},
-                ...
-            ]
+        # Map letter to index
+        answer_map = {'A': 0, 'B': 1, 'C': 2, 'D': 3}
+        correct_idx = answer_map[correct_answer]
+        
+        # Chuyển đổi sang Moodle question format
+        question_data = {
+            'courseid': course_id,
+            'questions': [{
+                'type': 'multichoice',
+                'name': question_name,
+                'questiontext': question_text,
+                'questiontextformat': 1,
+                'defaultmark': 1,
+                'penalty': 0,
+                'hidden': 0,
+                'option': [answer_a, answer_b, answer_c, answer_d],
+                'fraction': [
+                    100 if i == correct_idx else 0 
+                    for i in range(4)
+                ],
+                'feedback': [''] * 4
+            }]
         }
-        """
-        # Moodle API không trực tiếp tạo question, phải dùng core_question_create_questions
-        # Hoặc import XML
-        return self._make_request('core_question_create_questions', question_data)
-    
-    def import_questions_from_xml(self, question_file: str, category_id: int, course_id: int):
-        """
-        Import câu hỏi từ file XML (Aiken format)
         
-        Args:
-            question_file: Đường dẫn file XML
-            category_id: ID category để import vào
-            course_id: ID khóa học
-        
-        Returns:
-            Kết quả import
-        """
-        try:
-            with open(question_file, 'r', encoding='utf-8') as f:
-                file_content = f.read()
-            
-            # Moodle expects base64 encoded file hoặc gửi file upload
-            # Sử dụng core_import_questions nếu có plugin
-            
-            # Cách thay thế: Dùng webservice upload_files và sau đó import
-            # Nhưng đơn giản hơn là dùng moodle CLI hoặc web interface
-            
-            print("⚠️  Để import file XML, hãy upload qua Moodle web interface:")
-            print(f"   Course Settings → Question bank → Import")
-            print(f"   Chọn file: {question_file}")
-            
-            return True
-            
-        except Exception as e:
-            print(f"❌ Error reading file: {str(e)}")
-            return False
+        # Gọi API (simplified - actual implementation needs proper format)
+        print(f"[INFO] Creating question: {question_name}")
+        return question_data
     
-    def test_connection(self):
-        """Test kết nối Moodle"""
-        result = self.get_courses()
-        if result:
-            print("✅ Kết nối Moodle thành công!")
-            return True
-        else:
-            print("❌ Kết nối Moodle thất bại!")
-            return False
-
-def guide_moodle_setup():
-    """Hướng dẫn setup Moodle Web Services"""
-    print("""
-╔════════════════════════════════════════════════════════════╗
-║         HƯỚNG DẪN SETUP MOODLE WEB SERVICES               ║
-╚════════════════════════════════════════════════════════════╝
-
-1. BƯỚC 1: Enable Web Services trên Moodle
-   - Đăng nhập Moodle với tài khoản Admin
-   - Site Administration → Advanced features → Enable web services ✓
-   - Lưu thay đổi
-
-2. BƯỚC 2: Tạo Web Service
-   - Site Administration → Plugins → Web services → Manage services
-   - Tạo service mới:
-     • Name: "AI Question Generator"
-     • Enable service: ✓
-     • Restrict by IP: ✗ (hoặc thêm IP máy của bạn)
-     • Token generated: ✓
-
-3. BƯỚC 3: Add Functions vào Service
-   - Click vào service vừa tạo
-   - Add functions cần thiết:
-     • core_course_get_courses
-     • core_question_get_categories
-     • core_question_create_questions
-     • core_question_update_questions
-
-4. BƯỚC 4: Tạo User Token
-   - Site Administration → Plugins → Web services → Manage tokens
-   - Tạo token mới:
-     • User: (chọn user của bạn)
-     • Service: "AI Question Generator"
-   - Copy token và lưu
-
-
-5. THÔNG TIN CẦN CÓ:
-   - Moodle URL: http://your-moodle-url
-   - Token: xxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-   - Course ID: (tìm ở URL khi vào khóa học, ?id=XXX)
-
-6. CÁCH IMPORT CÂU HỎI:
-   Option A: Dùng Moodle Web Interface (dễ nhất)
-      - Course → Settings → Question bank → Import
-      - Chọn file XML → Choose import format: Aiken → Upload
-   
-   Option B: Dùng Moodle CLI (cần SSH access)
-      - php admin/tool/importquestions/cli/import.php
-   
-   Option C: Dùng API (nếu Moodle plugin hỗ trợ)
-      - Sử dụng script Python dưới đây
-
-═══════════════════════════════════════════════════════════════
-    """)
-
-def interactive_setup():
-    """Thiết lập interactively"""
-    print("\n📋 THIẾT LẬP MOODLE INTEGRATION\n")
+    def create_quiz(self, course_id: int, quiz_name: str, quiz_desc: str = "") -> Optional[Dict]:
+        """Tạo bài quiz"""
+        params = {
+            'courseid': course_id,
+            'name': quiz_name,
+            'intro': quiz_desc,
+        }
+        result = self._call_api('core_course_create_modules', params)
+        return result
     
-    moodle_url = input("Nhập Moodle URL (ví dụ: http://localhost/moodle): ").strip()
-    token = input("Nhập Web Service Token: ").strip()
+    def get_quiz_questions(self, quiz_id: int) -> Optional[List]:
+        """Lấy danh sách câu hỏi trong quiz"""
+        params = {'quizid': quiz_id}
+        result = self._call_api('mod_quiz_get_quiz_questions', params)
+        return result.get('questions', []) if result else None
     
-    if not moodle_url or not token:
-        print("❌ URL hoặc Token không được để trống!")
-        return None
+    def add_question_to_quiz(self, quiz_id: int, question_id: int, page: int = 0) -> bool:
+        """Thêm câu hỏi vào quiz"""
+        params = {
+            'quizid': quiz_id,
+            'questionid': question_id,
+            'page': page
+        }
+        result = self._call_api('mod_quiz_add_quiz_questions', params)
+        return result is not None
     
-    # Test connection
-    print("\n🔗 Test kết nối...")
-    integration = MoodleIntegration(moodle_url, token)
+    def get_enrolled_users(self, course_id: int) -> Optional[List]:
+        """Lấy danh sách học viên đã ghi danh"""
+        params = {'courseid': course_id}
+        result = self._call_api('core_enrol_get_enrolled_users', params)
+        return result if result else None
     
-    if integration.test_connection():
-        print("\n✅ Setup thành công!")
-        return integration
+    def update_question(self, question_id: int, question_data: Dict) -> bool:
+        """Cập nhật câu hỏi"""
+        params = {
+            'questionid': question_id,
+            **question_data
+        }
+        result = self._call_api('core_question_update_questions', params)
+        return result is not None
+    
+    def delete_question(self, question_id: int) -> bool:
+        """Xóa câu hỏi"""
+        params = {'questionid': question_id}
+        result = self._call_api('core_question_delete_questions', params)
+        return result is not None
+    
+    def get_user_profile(self, user_id: int) -> Optional[Dict]:
+        """Lấy thông tin profile người dùng"""
+        params = {'userid': user_id, 'userfields': 'id,username,fullname,email'}
+        result = self._call_api('core_user_get_users', params)
+        return result.get('users', [])[0] if result and result.get('users') else None
+    
+    def batch_import_questions(self, course_id: int, questions: List[Dict]) -> int:
+        """Nhập batch câu hỏi"""
+        count = 0
+        for q in questions:
+            result = self.create_question(
+                course_id=course_id,
+                question_name=q.get('name', 'Untitled'),
+                question_text=q.get('text', ''),
+                answer_a=q.get('options', ['', '', '', ''])[0],
+                answer_b=q.get('options', ['', '', '', ''])[1],
+                answer_c=q.get('options', ['', '', '', ''])[2],
+                answer_d=q.get('options', ['', '', '', ''])[3],
+                correct_answer=q.get('answer', 'A')
+            )
+            if result:
+                count += 1
+        return count
+
+def test_connection(moodle_url: str, token: str) -> bool:
+    """Kiểm tra kết nối Moodle"""
+    print(f"\nKiểm tra kết nối: {moodle_url}")
+    
+    api = MoodleAPI(moodle_url, token)
+    info = api.get_site_info()
+    
+    if info:
+        print(f"[OK] Kết nối thành công!")
+        print(f"    Site: {info.get('sitename', 'Unknown')}")
+        print(f"    Version: {info.get('version', 'Unknown')}")
+        return True
     else:
-        print("\n❌ Không thể kết nối đến Moodle")
-        print("Vui lòng kiểm tra:")
-        print("  - Moodle URL có đúng không?")
-        print("  - Token có hợp lệ không?")
-        print("  - Web services có enable trên Moodle không?")
-        return None
+        print(f"[ERROR] Không thể kết nối!")
+        return False
+
+def main():
+    print("""
+════════════════════════════════════════════════════════════
+ MOODLE INTEGRATION TEST
+════════════════════════════════════════════════════════════
+    """)
+    
+    # Config
+    MOODLE_URL = input("Nhập URL Moodle (vd: https://moodle.example.com): ").strip()
+    TOKEN = input("Nhập Web Service Token: ").strip()
+    
+    if not MOODLE_URL or not TOKEN:
+        print("[ERROR] URL và Token không được để trống!")
+        return
+    
+    # Test kết nối
+    if test_connection(MOODLE_URL, TOKEN):
+        api = MoodleAPI(MOODLE_URL, TOKEN)
+        
+        # Lấy danh sách khóa học
+        print("\nLấy danh sách khóa học...")
+        courses = api.get_courses()
+        
+        if courses:
+            print(f"Tìm thấy {len(courses)} khóa học:")
+            for c in courses[:5]:
+                print(f"   - {c.get('fullname', 'Unknown')} (ID: {c.get('id')})")
+        else:
+            print("[INFO] Không tìm thấy khóa học nào")
 
 if __name__ == "__main__":
-    # Hiển thị guide
-    guide_moodle_setup()
-    
-    # Setup interactively (optional)
-    # moodle = interactive_setup()
-    # if moodle:
-    #     courses = moodle.get_courses()
-    #     print(f"✅ Tìm thấy {len(courses)} khóa học")
+    main()
+

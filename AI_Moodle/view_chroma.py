@@ -1,84 +1,97 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 """
-🔍 XEM DỮ LIỆU LƯUTRỮ TRONG CHROMADB
+VIEW CHROMA - Xem dữ liệu trong ChromaDB
 """
 
 import chromadb
+import json
 
-def view_chroma_data():
-    """Xem toàn bộ dữ liệu lưu trong ChromaDB"""
-    
+def view_collection_info():
+    """Xem thông tin collection"""
     print("""
-╔════════════════════════════════════════════════════════════╗
-║          XEM DỮ LIỆU CHROMADB                             ║
-╚════════════════════════════════════════════════════════════╝
+════════════════════════════════════════════════════════════
+ VIEW CHROMADB
+════════════════════════════════════════════════════════════
     """)
     
+    # Kết nối ChromaDB
+    client = chromadb.PersistentClient(path="./db_moodle")
+    
+    # List collections
+    collections = client.list_collections()
+    print(f"\nTổng collections: {len(collections)}")
+    
+    for collection in collections:
+        print(f"\n[Collection] {collection.name}")
+        print(f"   Số documents: {collection.count()}")
+        
+        # Get sample documents
+        results = collection.get(limit=3)
+        if results['documents']:
+            print(f"   Sample documents:")
+            for i, (doc_id, doc, meta) in enumerate(zip(
+                results['ids'], 
+                results['documents'], 
+                results['metadatas']
+            )):
+                print(f"      [{i+1}] ID: {doc_id}")
+                print(f"          Content: {doc[:80]}..." if len(doc) > 80 else f"          Content: {doc}")
+                print(f"          Metadata: {json.dumps(meta)}")
+
+def search_documents(collection_name: str, query: str, n_results: int = 5):
+    """Tìm kiếm documents"""
+    client = chromadb.PersistentClient(path="./db_moodle")
+    
     try:
-        # Kết nối ChromaDB
-        client = chromadb.PersistentClient(path="./db_moodle")
+        collection = client.get_collection(name=collection_name)
+        results = collection.query(query_texts=[query], n_results=n_results)
         
-        # Liệt kê các collection
-        print("📚 Danh sách Collections:")
-        collections = client.list_collections()
-        print(f"   Tìm thấy: {len(collections)} collection\n")
+        print(f"\nTìm kiếm: '{query}'")
+        print(f"Kết quả: {len(results['documents'][0])} documents\n")
         
-        for col in collections:
-            print(f"   ├─ {col.name}")
-        
-        # Xem chi tiết collection "giao_trinh_c"
-        print("\n" + "="*70)
-        print("📖 CHI TIẾT COLLECTION: giao_trinh_c")
-        print("="*70 + "\n")
-        
-        collection = client.get_collection(name="giao_trinh_c")
-        
-        # Thống kê
-        count = collection.count()
-        print(f"📊 Tổng số documents: {count}\n")
-        
-        # Xem một số documents
-        print("📄 Danh sách 10 document đầu tiên:\n")
-        
-        all_data = collection.get(limit=count)
-        
-        for i, (doc_id, document, metadata) in enumerate(
-            zip(all_data['ids'], all_data['documents'], all_data['metadatas']), 1
-        ):
-            print(f"{i}. ID: {doc_id}")
-            print(f"   📝 Nội dung: {document[:100]}...")
-            if metadata:
-                print(f"   📌 Metadata: {metadata}")
+        for i, (doc, meta, dist) in enumerate(zip(
+            results['documents'][0],
+            results['metadatas'][0],
+            results['distances'][0]
+        )):
+            print(f"[{i+1}] Distance: {dist:.4f}")
+            print(f"    Content: {doc[:100]}..." if len(doc) > 100 else f"    Content: {doc}")
+            print(f"    Metadata: {json.dumps(meta)}")
             print()
-            
-            if i >= 10:  # Chỉ show 10 cái đầu
-                break
-        
-        if count > 10:
-            print(f"   ... và {count - 10} document khác")
-        
-        # Thử search
-        print("\n" + "="*70)
-        print("🔎 THỬ SEARCH TEST")
-        print("="*70 + "\n")
-        
-        query = "Giải thuật"
-        results = collection.query(query_texts=[query], n_results=3)
-        
-        print(f"Tìm kiếm: '{query}'\n")
-        print(f"Tìm thấy {len(results['documents'][0])} kết quả:\n")
-        
-        for i, (doc, dist) in enumerate(zip(results['documents'][0], results['distances'][0]), 1):
-            print(f"{i}. [Distance: {dist:.4f}]")
-            print(f"   {doc[:150]}...")
-            print()
-        
-        print("\n✅ Hoàn tất!")
-        
+    
     except Exception as e:
-        print(f"❌ Lỗi: {str(e)}")
-        import traceback
-        traceback.print_exc()
+        print(f"[ERROR] Error: {str(e)}")
+
+def main():
+    print("""
+════════════════════════════════════════════════════════════
+ CHROMADB VIEWER
+════════════════════════════════════════════════════════════
+
+Menu:
+  1 - Xem thông tin collections
+  2 - Tìm kiếm documents
+  0 - Thoát
+    """)
+    
+    choice = input("Chọn (0-2): ").strip()
+    
+    if choice == "1":
+        view_collection_info()
+    elif choice == "2":
+        collection_name = input("Nhập tên collection (default: giao_trinh_c): ").strip() or "giao_trinh_c"
+        query = input("Nhập query tìm kiếm: ").strip()
+        n = input("Số kết quả (default: 5): ").strip() or "5"
+        
+        try:
+            search_documents(collection_name, query, int(n))
+        except:
+            print("[ERROR] Lỗi!")
+    elif choice == "0":
+        print("Thoát!")
+    else:
+        print("[ERROR] Lựa chọn không hợp lệ!")
 
 if __name__ == "__main__":
-    view_chroma_data()
+    main()
+
