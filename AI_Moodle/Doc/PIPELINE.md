@@ -1,94 +1,94 @@
-# AI Moodle Question Generator - Project Pipeline
+# AI Moodle Question Generator - Pipeline Dự Án
 
-## Overview
-An automated system that generates high-quality quiz questions using local LLMs and integrates them with Moodle LMS.
+## Tổng quan
+Hệ thống tự động sinh câu hỏi trắc nghiệm chất lượng cao từ tài liệu giáo trình sử dụng local LLMs và tích hợp với Moodle LMS.
 
 ---
 
-## Stage 1: Data Ingestion
+## Giai đoạn 1: Nạp dữ liệu
 
-**Input:** `sample_data.txt` (C programming course materials)
+**Input:** `sample_data.txt` (Tài liệu giáo trình lập trình C)
 
-**Process:**
+**Quy trình:**
 - File: `ingest_data.py`
-- Parse document chunks with pattern: `[CHUNK X | PAGE Y]`
-- Convert text to embeddings
-- Store in ChromaDB with metadata (chunk ID, page number)
+- Parse chunks với pattern: `[CHUNK X | TRANG Y]`
+- Chuyển đổi text thành embeddings
+- Lưu vào ChromaDB với metadata (chunk ID, trang)
 
-**Output:** Persistent ChromaDB database (`db_moodle/`)
-- Ready for semantic search queries
-- Indexed and optimized for vector similarity
+**Output:** Database ChromaDB lưu trữ (`db_moodle/`)
+- Sẵn sàng truy vấn semantic
+- Indexed và tối ưu cho vector similarity
 
 ---
 
-## Stage 2: Model Evaluation
+## Giai đoạn 2: Đánh giá Model
 
-**Three Local LLM Models (Ollama):**
-1. **Deepseek-coder-v2** - Code-specific expertise
-2. **Qwen2.5:7b** - Balanced general purpose
-3. **Llama3.1:8b** - Strong theory understanding
+**Ba Local LLM Models (Ollama):**
+1. **Deepseek-coder-v2** - Chuyên ngành code
+2. **Qwen2.5:7b** - Balanced mục đích chung
+3. **Llama3.1:8b** - Lý thuyết và giải thích
 
-**Evaluation Tools:**
-- `test_quick.py` - Compare 2 models on same topic OR 2 question types on same model
-- `test_deepseek_code.py` - Compare all 3 models on code-based questions
+**Công cụ đánh giá:**
+- `test_quick.py` - So sánh 2 model cùng topic hoặc 2 loại câu cùng model
+- `test_deepseek_code.py` - So sánh tất cả 3 models trên câu code
 
-**Automatic Quality Metrics:**
+**Metrics đánh giá tự động:**
 1. **Faithfulness** (0.0-1.0)
-   - Does the question accurately reflect the source context?
+   - Câu hỏi có dựa trên context không?
    
 2. **Relevancy** (0.0-1.0)
-   - Is the question related to the specified topic?
+   - Câu hỏi có liên quan đến topic không?
    
 3. **Quality** (0.0-1.0)
-   - Is it clear, well-formatted, and pedagogically sound?
+   - Câu hỏi có rõ ràng, đúng format không?
 
-**Acceptance Threshold:** Average score ≥ 0.35
+**Ngưỡng chấp nhận:** Score trung bình >= 0.35
 
 **Output:**
-- Model performance comparison results
-- Best-performing model per topic/question type
-- Metrics dashboard for decision-making
+- Kết quả so sánh hiệu suất model
+- Model tốt nhất per topic/loại câu
+- Dashboard metrics để ra quyết định
 
 ---
 
-## Stage 3: Question Generation & Export
+## Giai đoạn 3: Sinh & Export câu hỏi
 
 **File:** `export_to_moodle.py`
 
-**Process:**
+**Quy trình:**
 
 ```
-For each (Topic, Model, Question Type):
-  1. Query ChromaDB → Retrieve relevant context
-  2. Call LLM → Generate question with options A) B) C) D)
-  3. Parse answer format → Extract correct answer
-  4. Evaluate 3 metrics → Check against threshold
-  5. Accept/Reject based on score
+Cho mỗi (Topic, Model, Question Type):
+  1. Query ChromaDB → Lấy context liên quan
+  2. Gọi LLM → Sinh câu với options A) B) C) D)
+  3. Parse format → Trích đáp án đúng
+  4. Evaluate 3 metrics → Kiểm tra ngưỡng
+  5. Chấp nhận/Bỏ dựa trên score
 ```
 
-**Configuration:**
-- **Topics:** Algorithm basics, Loop structures, Functions & recursion
-- **Models:** All 3 local LLMs
-- **Question Types:** Theory, Code implementation
+**Cấu hình:**
+- **Topics:** Giải thuật cơ bản, Vòng lặp, Hàm & đệ quy
+- **Models:** Tất cả 3 local LLMs
+- **Question Types:** Lý thuyết, Code thực hành
 
-**Example:**
-- Potential combinations: 3 topics × 3 models × 2 types = 18 questions
-- After filtering: ~12-15 high-quality questions retained
+**Ví dụ:**
+- Tổ hợp tiềm năng: 3 topics × 3 models × 2 loại = 18 câu
+- Sau lọc: ~12-15 câu có chất lượng cao
 
-**Output Format:** XML Aiken (Moodle standard)
+**Định dạng Output:** XML Aiken (chuẩn Moodle)
 
 ```xml
 <quiz>
   <question type="multichoice">
-    <name>Question 1: Basic Algorithm</name>
+    <name>Câu hỏi 1: Giải thuật cơ bản</name>
     <questiontext format="html">
-      <text>What is an algorithm?...</text>
+      <text>Giải thuật là gì?...</text>
     </questiontext>
     <answer fraction="100">
-      <text>A correct definition...</text>
+      <text>Định nghĩa đúng...</text>
     </answer>
     <answer fraction="0">
-      <text>Incorrect option B</text>
+      <text>Option B sai</text>
     </answer>
     ...
   </question>
@@ -99,76 +99,76 @@ For each (Topic, Model, Question Type):
 
 ---
 
-## Stage 4: Moodle Integration
+## Giai đoạn 4: Tích hợp Moodle
 
 **File:** `moodle_integration.py`
 
-**Prerequisites:**
-- Moodle server URL
+**Điều kiện tiên quyết:**
+- URL server Moodle
 - Web Service Token (User > Preferences > Web Services)
-- REST API enabled on Moodle
+- REST API enabled trên Moodle
 
 **API Wrapper Class: MoodleAPI**
 
-**Core Functions:**
-- `get_site_info()` - Test connection & retrieve server info
-- `get_courses()` - List available courses
-- `get_course_categories()` - Retrieve course structure
-- `create_question()` - Create multichoice question in course
-- `create_quiz()` - Create new quiz module
-- `add_question_to_quiz()` - Link questions to quiz
-- `batch_import_questions()` - Mass import from XML
-- `get_enrolled_users()` - Retrieve student list
-- `update_question()` / `delete_question()` - Manage questions
+**Các hàm chính:**
+- `get_site_info()` - Test kết nối & lấy thông tin server
+- `get_courses()` - Lấy danh sách khóa học
+- `get_course_categories()` - Lấy cấu trúc khóa học
+- `create_question()` - Tạo câu hỏi trong course
+- `create_quiz()` - Tạo module quiz
+- `add_question_to_quiz()` - Liên kết câu vào quiz
+- `batch_import_questions()` - Import hàng loạt
+- `get_enrolled_users()` - Lấy danh sách học viên
+- `update_question()` / `delete_question()` - Quản lý câu
 
 **Workflow:**
-1. Authenticate using web service token
+1. Xác thực bằng web service token
 2. Parse questions_export.xml
-3. For each question:
-   - Extract text, options, correct answer
-   - Call Moodle API to create question
-   - Attach to specified course/quiz
-4. Verify import success
+3. Cho mỗi câu hỏi:
+   - Trích text, options, đáp án đúng
+   - Gọi API Moodle tạo câu hỏi
+   - Gắn vào course/quiz
+4. Xác minh upload thành công
 
 **Output:** 
-- Questions available in Moodle course
-- Quiz ready for students to attempt
-- Assessment data collected in Moodle gradebook
+- Câu hỏi có sẵn trong course Moodle
+- Quiz sẵn cho học viên
+- Dữ liệu đánh giá thu trong gradebook
 
 ---
 
-## Supporting Tools
+## Công cụ hỗ trợ
 
 **File:** `view_chroma.py`
 
-**Features:**
-- View ChromaDB collection statistics
-- Search documents by semantic similarity
-- Debug and verify ingested data quality
-- Sample retrieval for validation
+**Tính năng:**
+- Xem thống kê collection ChromaDB
+- Tìm kiếm documents theo semantic similarity
+- Debug và xác minh chất lượng dữ liệu đã nạp
+- Lấy mẫu để kiểm tra
 
 ---
 
-## Main Orchestrator
+## Orchestrator chính
 
 **File:** `main.py`
 
-**Pipeline Functions:**
-1. `print_header()` - Display welcome banner
-2. `run_step_1_ingestion()` - Execute data ingestion
-3. `run_step_2_evaluation()` - Run model evaluation
-4. `run_step_3_export()` - Generate and export questions
-5. `run_step_4_moodle_optional()` - Optional Moodle upload
-6. `main()` - Orchestrate full pipeline
+**Các function pipeline:**
+1. `print_header()` - Hiển thị banner
+2. `run_step_1_ingestion()` - Thực hiện nạp dữ liệu
+3. `run_step_2_evaluation()` - Chạy đánh giá model
+4. `run_step_3_export()` - Sinh và export câu hỏi
+5. `run_step_4_moodle_optional()` - Upload tùy chọn
+6. `main()` - Orchestrate toàn bộ pipeline
 
-**Execution:**
+**Thực thi:**
 ```bash
 python main.py
 ```
 
 ---
 
-## Data Flow Diagram
+## Biểu đồ luồng dữ liệu
 
 ```
                     sample_data.txt
@@ -180,12 +180,12 @@ python main.py
     │      db_moodle/chroma.sqlite3           │
     └─────────────────┬───────────────────────┘
                       ↓
-            (semantic similarity query)
+            (truy vấn semantic similarity)
                       ↓
         ┌─────────────┴──────────────┐
         ↓                            ↓
   [export_to_moodle.py]      [test_*.py]
-   (generate questions)     (evaluate models)
+   (sinh câu hỏi)          (đánh giá model)
         ↓                            ↓
    ┌────────────┬────────────┐      ├─ Metrics
    ↓            ↓            ↓      ├─ Scores
@@ -201,18 +201,18 @@ Deepseek    Qwen2.5      Llama3.1   └─ Rankings
         ↓
    Moodle Server
         ↓
-Quiz + Questions Ready
-   for Students
+Quiz + Câu hỏi sẵn
+   cho học viên
 ```
 
 ---
 
-## Key Dependencies
+## Dependencies chính
 
 ```
-chromadb          - Vector database for semantic search
+chromadb          - Vector database cho semantic search
 ollama            - Local LLM runtime
-requests          - HTTP client for Moodle API
+requests          - HTTP client cho Moodle API
 xml.etree.ElementTree - XML parsing & generation
 json              - Metadata handling
 re                - Regular expression parsing
@@ -220,49 +220,49 @@ re                - Regular expression parsing
 
 ---
 
-## Quality Assurance
+## Đảm bảo chất lượng
 
-**Validation Points:**
-1. ChromaDB ingestion: Verify chunk count & metadata
-2. LLM generation: Check question format & completeness
-3. Metric evaluation: Confirm threshold compliance
+**Các điểm kiểm tra:**
+1. ChromaDB ingestion: Xác minh số chunk & metadata
+2. LLM generation: Kiểm tra format & tính hoàn chỉnh
+3. Metric evaluation: Xác nhận compliance ngưỡng
 4. XML export: Validate XML structure
-5. Moodle API: Test connection before upload
+5. Moodle API: Test kết nối trước upload
 
-**Error Handling:**
-- Graceful degradation on LLM timeouts
-- Skip low-scoring questions
-- Detailed logging for debugging
-- Fallback options for failed API calls
+**Xử lý lỗi:**
+- Graceful degradation khi LLM timeout
+- Bỏ qua câu score thấp
+- Logging chi tiết để debug
+- Fallback options cho failed API calls
 
 ---
 
-## File Structure
+## Cấu trúc file
 
 ```
 AI_Moodle/
-├── main.py                    # Pipeline orchestrator
-├── ingest_data.py             # Data ingestion
-├── export_to_moodle.py        # Question generation
-├── moodle_integration.py      # Moodle API wrapper
-├── test_quick.py              # Quick model comparison
-├── test_deepseek_code.py      # 3-model code test
-├── view_chroma.py             # ChromaDB viewer
+├── main.py                    # Orchestrator pipeline
+├── ingest_data.py             # Nạp dữ liệu
+├── export_to_moodle.py        # Sinh & export câu
+├── moodle_integration.py      # API wrapper Moodle
+├── test_quick.py              # So sánh model nhanh
+├── test_deepseek_code.py      # Test 3 model code
+├── view_chroma.py             # Viewer ChromaDB
 ├── data/
-│   └── sample_data.txt        # Course materials
+│   └── sample_data.txt        # Tài liệu học
 ├── db_moodle/
-│   ├── chroma.sqlite3         # ChromaDB database
+│   ├── chroma.sqlite3         # Database ChromaDB
 │   └── [collection folders]   # Vector indexes
-├── questions_export.xml       # Generated questions
-├── README.md                  # Project documentation
-├── REPORT.md                  # Comprehensive report
-├── PIPELINE.md                # This file
+├── questions_export.xml       # Câu hỏi sinh ra
+├── README.md                  # Hướng dẫn nhanh
+├── REPORT.md                  # Báo cáo toàn diện
+├── PIPELINE.md                # File này
 └── requirement.txt            # Python dependencies
 ```
 
 ---
 
-## Configuration
+## Cấu hình
 
 ### ChromaDB Setup
 ```python
@@ -270,7 +270,7 @@ client = chromadb.PersistentClient(path="./db_moodle")
 collection = client.get_or_create_collection(name="giao_trinh_c")
 ```
 
-### Moodle Connection
+### Kết nối Moodle
 ```python
 api = MoodleAPI(
     moodle_url="https://moodle.example.com",
@@ -279,98 +279,98 @@ api = MoodleAPI(
 ```
 
 ### LLM Models
-- Access via Ollama (typically running on localhost:11434)
-- Models pulled: `deepseek-coder-v2`, `qwen2.5:7b`, `llama3.1:8b`
+- Truy cập qua Ollama (thường chạy trên localhost:11434)
+- Models được pull: `deepseek-coder-v2`, `qwen2.5:7b`, `llama3.1:8b`
 
 ---
 
-## Usage Examples
+## Ví dụ sử dụng
 
-### 1. Full Pipeline Execution
+### 1. Chạy toàn bộ pipeline
 ```bash
 python main.py
 ```
 
-### 2. Quick Model Comparison
+### 2. So sánh model nhanh
 ```bash
 python test_quick.py
-# Choose: Compare 2 models or Compare 2 question types
+# Chọn: So sánh 2 models hoặc So sánh 2 loại câu
 ```
 
-### 3. Code Question Evaluation
+### 3. Đánh giá câu code
 ```bash
 python test_deepseek_code.py
-# Compare all 3 models on code-based questions
+# So sánh tất cả 3 models trên câu code
 ```
 
-### 4. View ChromaDB Contents
+### 4. Xem dữ liệu ChromaDB
 ```bash
 python view_chroma.py
-# Explore ingested documents and search
+# Khám phá documents đã nạp và tìm kiếm
 ```
 
-### 5. Generate & Export Questions
+### 5. Sinh & Export câu hỏi
 ```bash
 python export_to_moodle.py
-# Batch generate and export to questions_export.xml
+# Sinh batch và export ra questions_export.xml
 ```
 
-### 6. Test Moodle Connection
+### 6. Test kết nối Moodle
 ```bash
 python -c "from moodle_integration import test_connection; test_connection('URL', 'TOKEN')"
 ```
 
 ---
 
-## Success Criteria
+## Tiêu chí thành công
 
-✓ ChromaDB successfully ingests all course materials
-✓ All 3 LLM models generate questions
-✓ Metrics evaluate with score ≥ 0.35 threshold
-✓ XML export is valid Aiken format
-✓ Moodle API connection established
-✓ Questions successfully uploaded to course
-✓ Quiz ready for student enrollment
-
----
-
-## Troubleshooting
-
-| Issue | Solution |
-|-------|----------|
-| ChromaDB not found | Ensure `ingest_data.py` ran successfully first |
-| LLM timeout | Verify Ollama is running: `ollama serve` |
-| Low quality scores | Review context relevance; adjust topic keywords |
-| Moodle connection failed | Check URL, token validity, and network |
-| XML parse error | Validate LLM output format; check special chars |
-| Unicode/encoding issues | Ensure UTF-8 encoding throughout |
+✓ ChromaDB nạp thành công tất cả tài liệu
+✓ Tất cả 3 LLM model sinh câu hỏi
+✓ Metrics đánh giá với score >= 0.35
+✓ XML export là định dạng Aiken hợp lệ
+✓ Kết nối API Moodle được thiết lập
+✓ Câu hỏi upload thành công vào course
+✓ Quiz sẵn cho học viên
 
 ---
 
-## Performance Notes
+## Khắc phục sự cố
 
-- **Ingestion Time:** ~10-30 seconds (depends on file size)
-- **Per-Question Generation:** ~3-5 seconds (LLM inference)
-- **Full Batch (18 questions):** ~2-3 minutes
-- **Moodle Upload:** ~1-2 seconds per question
+| Vấn đề | Giải pháp |
+|--------|----------|
+| ChromaDB không tìm thấy | Đảm bảo `ingest_data.py` chạy trước |
+| LLM timeout | Xác minh Ollama chạy: `ollama serve` |
+| Score thấp | Xem lại context relevance, điều chỉnh topic |
+| Moodle connection failed | Kiểm tra URL, token hợp lệ, mạng |
+| XML parse error | Validate LLM output format, ký tự đặc biệt |
+| Unicode/encoding issues | Đảm bảo UTF-8 encoding toàn bộ |
 
 ---
 
-## Future Enhancements
+## Ghi chú hiệu suất
 
-- [ ] Auto-detect language in documents
-- [ ] Support for additional question types (essay, matching)
-- [ ] Machine learning model fine-tuning on domain data
-- [ ] Difficulty estimation per question
-- [ ] Student performance feedback loop
-- [ ] Multi-language support
-- [ ] Batch scheduling with cron jobs
-- [ ] Web UI dashboard for monitoring
+- **Nạp dữ liệu:** ~10-30 giây (tùy kích thước file)
+- **Sinh 1 câu:** ~3-5 giây (LLM inference)
+- **Batch 18 câu:** ~2-3 phút
+- **Upload Moodle:** ~1-2 giây/câu
+
+---
+
+## Nâng cấp trong tương lai
+
+- [ ] Tự động phát hiện ngôn ngữ trong documents
+- [ ] Hỗ trợ loại câu hỏi bổ sung (essay, matching)
+- [ ] Fine-tune model ML trên domain data
+- [ ] Ước lượng độ khó cho mỗi câu
+- [ ] Feedback loop từ hiệu suất học viên
+- [ ] Hỗ trợ đa ngôn ngữ
+- [ ] Tự động schedule với cron jobs
+- [ ] Web UI dashboard để monitoring
 
 ---
 
 ## License & Credits
 
 Project: AI Moodle Question Generator
-Status: Academic Research Project
-Date: 2026
+Trạng thái: Dự án Nghiên cứu học tập
+Năm: 2026
